@@ -1,0 +1,154 @@
+---criando usuario MariaDB
+
+CREATE USER guilherme;
+
+CREATE DATABASE `uvv` /*!40100 DEFAULT CHARACTER SET latin1 */;
+
+GRANT ALL PRIVILEGES ON uvv.* TO guilherme;
+
+use uvv;
+
+---criando tabelas
+
+CREATE TABLE `funcionario` (
+  `cpf` char(11) NOT NULL COMMENT 'CPF do funcionário',
+  `primeiro_nome` varchar(15) DEFAULT NULL COMMENT 'Primeiro nome do funcionário',
+  `nome_meio` char(1) DEFAULT NULL COMMENT 'Nome do meio do funcionário',
+  `ultimo_nome` varchar(15) DEFAULT NULL COMMENT 'Último nome do funcionário',
+  `data_nascimento` date DEFAULT NULL COMMENT 'Data de nascimento do funcionário',
+  `endereco` varchar(50) DEFAULT NULL COMMENT 'Endereço do funcionário',
+  `sexo` char(1) DEFAULT NULL COMMENT 'Sexo do funcionário',
+  `salario` decimal(10,2) DEFAULT NULL COMMENT 'Salário do funcionário',
+  `cpf_supervisor` char(11) DEFAULT NULL COMMENT 'CPF do supervisor do funcionário',
+  `numero_departamento` int(11) DEFAULT NULL COMMENT 'Número do departamento do funcionário',
+  PRIMARY KEY (`cpf`),
+  CONSTRAINT `CONSTRAINT_1` CHECK (`salario` >= 0),
+  CONSTRAINT `CONSTRAINT_2` CHECK (`numero_departamento` > 0)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1 COMMENT='Tabela funcionário';
+
+-- uvv.departamento definition
+
+CREATE TABLE `departamento` (
+  `numero_departamento` int(11) NOT NULL COMMENT 'Número do departamento',
+  `nome_departamento` varchar(15) DEFAULT NULL COMMENT 'Nome do departamento',
+  `cpf_gerente` char(11) DEFAULT NULL COMMENT 'CPF do gerente',
+  `data_inicio_gerente` date DEFAULT NULL COMMENT 'Data de início do gerente',
+  PRIMARY KEY (`numero_departamento`),
+  UNIQUE KEY `departamento_idx` (`nome_departamento`),
+  KEY `funcionario_departamento_fk` (`cpf_gerente`),
+  CONSTRAINT `funcionario_departamento_fk` FOREIGN KEY (`cpf_gerente`) REFERENCES `funcionario` (`cpf`) ON DELETE NO ACTION ON UPDATE NO ACTION,
+  CONSTRAINT `CONSTRAINT_1` CHECK (`numero_departamento` > 0)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1 COMMENT='Tabela departamento';
+
+-- uvv.localizacoes_departamento definition
+
+CREATE TABLE `localizacoes_departamento` (
+  `numero_departamento` int(11) NOT NULL COMMENT 'Número do departamento',
+  `local` varchar(15) NOT NULL COMMENT 'Local do departamento',
+  PRIMARY KEY (`numero_departamento`,`local`),
+  CONSTRAINT `departamento_localizacoes_departamento_fk` FOREIGN KEY (`numero_departamento`) REFERENCES `departamento` (`numero_departamento`) ON DELETE NO ACTION ON UPDATE NO ACTION,
+  CONSTRAINT `CONSTRAINT_1` CHECK (`numero_departamento` > 0)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1 COMMENT='Tabela localização do departamento';
+
+-- uvv.projeto definition
+
+CREATE TABLE `projeto` (
+  `numero_projeto` int(11) NOT NULL COMMENT 'Número do projeto',
+  `nome_projeto` varchar(20) DEFAULT NULL COMMENT 'Nome do projeto',
+  `local_projeto` varchar(15) DEFAULT NULL COMMENT 'Local do projeto',
+  `numero_departamento` int(11) DEFAULT NULL COMMENT 'Número do departamento',
+  PRIMARY KEY (`numero_projeto`),
+  UNIQUE KEY `projeto_idx` (`nome_projeto`),
+  KEY `departamento_projeto_fk` (`numero_departamento`),
+  CONSTRAINT `departamento_projeto_fk` FOREIGN KEY (`numero_departamento`) REFERENCES `departamento` (`numero_departamento`) ON DELETE NO ACTION ON UPDATE NO ACTION,
+  CONSTRAINT `CONSTRAINT_1` CHECK (`numero_projeto` > 0),
+  CONSTRAINT `CONSTRAINT_2` CHECK (`numero_departamento` > 0)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1 COMMENT='Tabela projeto';
+
+-- uvv.dependente definition
+
+CREATE TABLE `dependente` (
+  `cpf_funcionario` char(11) NOT NULL COMMENT 'CPF do funcionário',
+  `nome_dependente` varchar(15) NOT NULL COMMENT 'Nome do dependente',
+  `sexo` char(1) DEFAULT NULL COMMENT 'Sexo do dependente',
+  `data_nascimento` date DEFAULT NULL COMMENT 'Data de nascimento do dependente',
+  `parentesco` varchar(15) DEFAULT NULL COMMENT 'Parentesco do dependente com o funcionário',
+  PRIMARY KEY (`cpf_funcionario`,`nome_dependente`),
+  CONSTRAINT `funcionario_dependente_fk` FOREIGN KEY (`cpf_funcionario`) REFERENCES `funcionario` (`cpf`) ON DELETE NO ACTION ON UPDATE NO ACTION
+) ENGINE=InnoDB DEFAULT CHARSET=latin1 COMMENT='Tabela dependente';
+
+-- uvv.trabalha_em definition
+
+CREATE TABLE `trabalha_em` (
+  `cpf_funcionario` char(11) NOT NULL COMMENT 'CPF do funcionário',
+  `numero_projeto` int(11) NOT NULL COMMENT 'Número do projeto',
+  `horas` decimal(3,1) DEFAULT NULL COMMENT 'Horas trabalhadas',
+  PRIMARY KEY (`cpf_funcionario`,`numero_projeto`),
+  KEY `projeto_trabalha_em_fk` (`numero_projeto`),
+  CONSTRAINT `funcionario_trabalha_em_fk` FOREIGN KEY (`cpf_funcionario`) REFERENCES `funcionario` (`cpf`) ON DELETE NO ACTION ON UPDATE NO ACTION,
+  CONSTRAINT `projeto_trabalha_em_fk` FOREIGN KEY (`numero_projeto`) REFERENCES `projeto` (`numero_projeto`) ON DELETE NO ACTION ON UPDATE NO ACTION,
+  CONSTRAINT `CONSTRAINT_1` CHECK (`numero_projeto` > 0),
+  CONSTRAINT `CONSTRAINT_2` CHECK (`horas` >= 0)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1 COMMENT='Tabela trabalha em';
+
+---inserindo dados na tabelas
+
+INSERT INTO elmasri.funcionario (cpf,primeiro_nome,nome_meio,ultimo_nome,data_nascimento,endereco,sexo,salario,cpf_supervisor,numero_departamento) VALUES
+	 ('98765432168','Jennifer','D','Souza','1946-06-20','Av.Arthur de Lima, 54 , Santo André , SP','f',43000.00,'88866555576',4),
+	 ('66688444476','Ronaldo','K','Lima','1962-09-15','Rua Rebouças, 65, Piracicaba, SP','m',38000.00,'33344555587',5),
+	 ('45345345376','Joice','A','Leite','1972-07-31','Av.Lucas Obes, 74 , São Paulo, SP','f',25000.00,'33344555587',5),
+	 ('98798798733','André','V','Pereira','1969-03-29','Rua Timbira, 35, São Paulo, SP','m',25000.00,'98765432168',4),
+	 ('12345678966','João','B','Silva','1965-01-09','Rua das Flores, 751, São Paulo, SP','m',30000.00,'33344555587',5),
+	 ('33344555587','Fernando','T','Wong','1955-12-08','Rua da Lapa, 34, São Paulo, SP','m',40000.00,'88866555576',5),
+	 ('88866555576','Jorge','E','Brito','1937-11-10','Rua do Horto, 35, São Paulo','m',55000.00,NULL,1),
+	 ('99988777767','Alice','J','Zelaya','1968-01-19','Rua Souza Lima, 35, Curitiba, PR','f',25000.00,'98765432168',4);
+	 
+ALTER TABLE elmasri.funcionario ADD CONSTRAINT fk_cpf_supervisor FOREIGN KEY (cpf_supervisor) REFERENCES elmasri.funcionario(cpf);
+
+INSERT INTO elmasri.departamento (numero_departamento,nome_departamento,cpf_gerente,data_inicio_gerente) VALUES
+	 (4,'Admininstração','98765432168','1995-01-01'),
+	 (1,'Matriz','88866555576','1981-06-19'),
+	 (5,'Pesquisa','33344555587','1988-05-22');
+	 
+INSERT INTO elmasri.localizacoes_departamento (local,numero_departamento) VALUES
+	 ('São Paulo',1),
+	 ('Mauá',4),
+	 ('Santo André',5),
+	 ('Itu',5),
+	 ('Sao Paulo',5);
+	 
+INSERT INTO elmasri.projeto (numero_projeto,nome_projeto,local_projeto,numero_departamento) VALUES
+	 (1,'ProdutoX','Santo André',5),
+	 (2,'ProdutoY','Itu',5),
+	 (3,'ProdutoZ','São Paulo',5),
+	 (10,'Informatização','Mauá',4),
+	 (20,'Reorganização','Sao Paulo',1),
+	 (30,'Novos Benefícios','Mauá',4);
+
+INSERT INTO elmasri.dependente (cpf_funcionario,nome_dependente,sexo,data_nascimento,parentesco) VALUES
+	 ('33344555587','Alicia','f','1986-04-05','Filha'),
+	 ('33344555587','Tiago','m','1983-10-25','Filho'),
+	 ('33344555587','Janaína','f','1958-05-03','Esposa'),
+	 ('98765432168','Antonio','m','1942-02-28','Marido'),
+	 ('12345678966','Michael','m','1988-01-04','Filho'),
+	 ('12345678966','Alícia','f','1988-12-30','Filha'),
+	 ('12345678966','Elizabeth','f','1967-05-05','Esposa');
+
+INSERT INTO elmasri.trabalha_em (cpf_funcionario,numero_projeto,horas) VALUES
+	 ('12345678966',1,32.5),
+	 ('12345678966',2,7.5),
+	 ('66688444476',3,40.0),
+	 ('45345345376',1,20.0),
+	 ('45345345376',2,20.0),
+	 ('33344555587',2,10.0),
+	 ('33344555587',3,10.0),
+	 ('33344555587',10,10.0),
+	 ('33344555587',20,10.0),
+	 ('99988777767',30,30.0),
+	 ('99988777767',10,10.0),
+	 ('98798798733',10,35.0),
+	 ('98798798733',30,5.0),
+	 ('98765432168',30,20.0),
+	 ('98765432168',20,15.0),
+	 ('88866555576',20,NULL);
+
